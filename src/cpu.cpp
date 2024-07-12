@@ -23,6 +23,7 @@
 #endif // __wasi__
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifdef _OPENMP
 #if NCNN_SIMPLEOMP
@@ -620,6 +621,20 @@ static int get_cpu_support_x86_avx_vnni()
 #endif
 }
 
+static int check_avx512_flag()
+{
+    const char* ncnn_x86_avx512 = "NCNN_X86_AVX512";
+    const char* value = getenv(ncnn_x86_avx512);
+
+    if (value)
+        if (strcmp(value, "0") == 0)
+        {
+            fprintf(stderr, "Warning: AVX512 support is disabled by environment variable NCNN_X86_AVX512=0\n");
+            return 0;
+        }
+    return 1;
+}
+
 static int get_cpu_support_x86_avx512()
 {
 #if __APPLE__
@@ -627,6 +642,9 @@ static int get_cpu_support_x86_avx512()
 #else
     unsigned int cpu_info[4] = {0};
     x86_cpuid(0, cpu_info);
+
+    if (!check_avx512_flag())
+        return 0;
 
     int nIds = cpu_info[0];
     if (nIds < 7)
@@ -658,6 +676,9 @@ static int get_cpu_support_x86_avx512_vnni()
     unsigned int cpu_info[4] = {0};
     x86_cpuid(0, cpu_info);
 
+    if (!check_avx512_flag())
+        return 0;
+
     int nIds = cpu_info[0];
     if (nIds < 7)
         return 0;
@@ -688,6 +709,9 @@ static int get_cpu_support_x86_avx512_bf16()
     unsigned int cpu_info[4] = {0};
     x86_cpuid(0, cpu_info);
 
+    if (!check_avx512_flag())
+        return 0;
+
     int nIds = cpu_info[0];
     if (nIds < 7)
         return 0;
@@ -713,6 +737,9 @@ static int get_cpu_support_x86_avx512_fp16()
 #else
     unsigned int cpu_info[4] = {0};
     x86_cpuid(0, cpu_info);
+
+    if (!check_avx512_flag())
+        return 0;
 
     int nIds = cpu_info[0];
     if (nIds < 7)
